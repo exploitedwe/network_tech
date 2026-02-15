@@ -232,12 +232,12 @@ variables:
       )
       \b
     )
-  number_range_1_15: |
+  number_range_0_15: |
     (?xi)
     (?:
       \b
       (?:
-        (?:[1-9])|
+        (?:[0-9])|
         (?:1[0-5])
       )
       \b
@@ -1438,7 +1438,10 @@ contexts:
     - include: route_map
     - include: configure_terminal_ip_dhcp_snooping
     - include: aaa_server_radius_dynamic_author
-    # - include: partials
+    - include: ip_protocol_source_interface
+    - include: tacacs_server
+    - include: radius_server
+    - include: misc_catch
 
 
   device_comment:
@@ -2829,51 +2832,98 @@ contexts:
         - match: |
             (?xi)
             ^\s*
-            (client)\s+
-            (?:
-              ({{ip}})|
-              ({{hostname}})|
-              (\S+)
-            )
+            (server-key)
             \s+
             (?:
-              (?:
-                  (server-key)
-                  \s+
-                  (?:
-                    (?:(0)\s+(\S+))|
-                    (?:(6)\s+(\S+))|
-                    (?:(7)\s+(\S+))|
-                    (?:(\S+)\s+(\S+))
-                  )
-                  (?:\s+(\S+))?
-              )|
-              (?:
-                (vrf)\s+
-                (\S+)
-              )|
-              (.*)
+              (0|6|7)\s+      # optional type (0 clear, 6/7 encoded)
             )?
+            (\S+)             # the key itself (no spaces)
+            \s*$
           captures:
-            1: support.constant
-            2: constant.numeric.ip.ipv4.address
-            3: constant.language.hostname
-            4: invalid.illegal
-            5: support.constant
-            6: constant.numeric
-            7: string.unquoted
-            8: constant.numeric
-            9: string.unquoted.cisco.password.type.6
-            10: constant.numeric
-            11: string.unquoted.cisco.password.type.7
-            12: invalid.illegal
-            13: invalid.illegal
-            14: invalid.illegal
-            15: support.constant
-            16: string.unquoted.vrf
-            17: invalid.illegal
+            1: support.constant                       # server-key
+            2: constant.numeric                       # key type (0/6/7) [optional]
+            3: string.unquoted                        # key value (e.g., 12qwaszx!@QWASZX)
         - include: pop_on_configure_terminal_context
 
+  ip_protocol_source_interface:
+    - match: |
+        (?xi)
+        ^\s*
+        (ip)\s+(radius|tacacs)\s+(source-interface)\s+({{interface_names}})\s*({{interface_numbers}})
+        \s*$
+      captures:
+        1: support.constant                # ip
+        2: support.constant                # radius | tacacs
+        3: support.constant                # source-interface
+        4: entity.other.attribute-name     # source-interface name
+        5: constant.numeric                # source-interface name number
+  tacacs_server:
+    - match: |
+        (?xi)
+        (tacacs)\s(server)\s(\S+)
+      captures:
+        1: variable.parameter       # tacacs
+        2: support.constant         # server
+        3: entity.other.attribute-name         # server name
+      push:
+        - meta_content_scope: text.network.cisco.ios.tacacs_server
+        - include: server_settings
+        - include: pop_on_configure_terminal_context
+
+  radius_server:
+    - match: |
+        (?xi)
+        ^\s*
+        (radius)\s(server)\s+(\S+)\s+
+      captures:
+        #1: cisco.scope             # scope
+        1: variable.parameter       # radius
+        2: support.constant         # server
+        3: entity.other.attribute-name         # server name
+      push:
+        - meta_content_scope: text.network.cisco.ios.radius_server
+        - include: server_settings
+        - include: pop_on_configure_terminal_context
+
+  server_settings:
+    - match: |
+        (?xi)
+        (?: 
+          (address)\s+(ipv4)\s+({{ip}})
+          ((auth-port)\s+({{number_range_1_4097}})\s+(acct-port)\s+({{number_range_1_4097}}))?
+        )
+      captures:
+        1: support.constant             # address
+        2: support.constant             # ipv4
+        3: constant.numeric             # IP
+        4: support.constant             # auth-port
+        5: constant.numeric             # auth-port number
+        6: support.constant             # acct-port
+        7: constant.numeric             # acct-port number
+    # Body line: ip (radius|tacacs) source-interface <interface>
+    - match: |
+        (?xi)
+        ^\s+
+        (key)\s+(\S+)\s+
+        \s*$
+      captures:
+        1: support.constant                # key
+        2: string.unquoted               # password
+  misc_catch:
+    - match: |
+        (?xi)
+        ^\s*
+        (?:
+          (ip\sforward-protocol\snd)|
+          (dot1x.system.auth.control)|
+          (service.compress.config)|
+          (control-plane$)
+        )
+      captures:
+        1: comment.line       # ip forward-protocol nd
+        2: variable.parameter         # dot1x system-auth-control
+        3: comment.line         # service compress-config
+        4: comment.line    # control-plane
 
   aaa_authorization:
     - match: |
@@ -2883,7 +2933,7 @@ contexts:
         (?:
           (auth-proxy)|
           (cache)|
-          (?:(commands)\s+({{number_range_1_15}}))|
+          (?:(commands)\s+({{number_range_0_15}}))|
           (config-commands)|
           (configuration)|
           (console)|
@@ -2935,7 +2985,7 @@ contexts:
             1: support.constant
         - match: (local)
           captures:
-            1: support.constant
+            1: keyword.control
         - match: (none)
           captures:
             1: support.constant
@@ -2966,10 +3016,26 @@ contexts:
         (?xi)
         ^\s*
         (aaa\s+accounting)\s+
+        (update)\s+
+        (newinfo)\s+
+        (periodic)\s+
+        ({{number_range_1_4097}})
+        \s*$
+      captures:
+        1: support.constant                      # 'aaa accounting'
+        2: entity.other.attribute-name           # 'update'
+        3: entity.other.attribute-name           # 'newinfo'
+        4: entity.other.attribute-name           # 'periodic'
+        5: constant.numeric                      # periodic interval (minutes)
+
+    - match: |
+        (?xi)
+        ^\s*
+        (aaa\s+accounting)\s+
         (?:
           (auth-proxy)|
           (system)|
-          (?:(commands)\s+({{number_range_1_15}}))|
+          (?:(commands)\s+({{number_range_0_15}}))|
           (network)|
           (exec)|
           (connection)|
@@ -2997,105 +3063,64 @@ contexts:
           )
         )
       captures:
-        1: support.constant
-        2: entity.other.attribute-name
-        3: entity.other.attribute-name
-        4: entity.other.attribute-name
-        5: constant.numeric
-        6: entity.other.attribute-name
-        7: entity.other.attribute-name
-        8: entity.other.attribute-name
-        9: entity.other.attribute-name
-        10: constant.language
-        11: constant.language
-        12: string.unquoted
-        13: support.constant
-        14: string.unquoted
-        15: support.constant
-        16: support.constant
-        17: support.constant
-        18: support.constant
-        19: string.unquoted
+        1: support.constant                       # aaa accounting
+        2: entity.other.attribute-name            # auth-proxy
+        3: entity.other.attribute-name            # system
+        4: entity.other.attribute-name            # commands
+        5: constant.numeric                       # 0 - 15
+        6: entity.other.attribute-name            # network
+        7: entity.other.attribute-name            # exec
+        8: entity.other.attribute-name            # connection
+        9: entity.other.attribute-name            # dot1x
+        10: constant.language                     # default
+        11: constant.language                     # guarantee-first
+        12: string.unquoted                       # (custom)
+        13: support.constant                      # vrf
+        14: string.unquoted                       # vrf name
+        15: support.constant                      # accounting action: start-stop | stop-only | none
+        16: support.constant                      # optional keyword: broadcast
+        17: support.constant                      # radius
+        18: support.constant                      # group
+        19: string.unquoted                       # (server group name)
 
 
   aaa_authentication:
-    - include: aaa_authentication_login
-    - include: aaa_authentication_dot1x
+    - include: aaa_authentication_main
 
-  aaa_authentication_dot1x:
+  aaa_authentication_main:
+    # Match the AAA authentication "header" up through the list name
     - match: |
         (?xi)
         ^\s*
-        (aaa)\s+(authentication)\s+(dot1x)\s+
-        (?:
-          (default)|
-          (\S+)
-        )
-        (?:\s+({{authentication_methods_dot1x}}))+
-      captures:
-        1: support.constant
-        2: support.constant
-        3: constant.language
-        4: support.constant
-        5: string.unquoted
-        6: constant.language
-
-  aaa_authentication_login:
-    - match: |
-        (?xi)
-        ^\s*
-        (?:(aaa\s+authentication)\s+)
-        (?:
-          (?:
-            (login)\s+
-            (?:
-              (?:(default)|(\S+))
-            )
-          )
-        )
+        (aaa\s+authentication)\s+
+        (login|enable|dot1x)\s+
+        (default|\S+)
       scope: text.network.cisco.aaa.authentication
       captures:
-        1: support.constant             # aaa authentication
-        2: support.constant             # login
-        3: support.constant             # default
-        4: string.unquoted              # group name
+        1: support.constant                 # 'aaa authentication'
+        2: entity.other.attribute-name      # 'login' | 'enable' | 'dot1x'
+        3: constant.language                # list name: 'default' or custom (if you prefer, change custom to string.unquoted)
       push:
+        # Highlight the remainder of the line as a sequence of methods/tokens
         - match: |
             (?xi)
-            (?:
+            (?:\s+
               (?:
-                \s+
-                (
-                  (?:cache)|
-                  (?:group)
-                )
-                \s+(\S+)
-              )?
-              (
-                (
-                  \s+
-                  (?:
-                    (?:{{authentication_methods}})|
-                    (?:enable)|
-                    (?:group\s+ldap)|
-                    (?:group\s+radius)|
-                    (?:group\s+tacacs\+)|
-                    (?:krb5-telnet)|
-                    (?:krb5)|
-                    (?:line)|
-                    (?:local-case)|
-                    (?:local)|
-                    (?:none)|
-                    (?:passwd-expiry)
-                  )
-                )+
+                (local|local-case|none|line|enable) |
+                (group)\s+(\S+)(?:\s+(enable|if-authenticated))?
               )
-            )
+            )+
+            \s*$
           pop: true
           captures:
-            1: support.constant             # method group type
-            2: string.unquoted              # method group name
-            3: entity.other.attribute-name  # method
+            1: entity.other.attribute-name  # method: local/local-case/none/line/enable
+            2: support.constant             # keyword: group
+            3: string.unquoted              # group name (e.g., ISE-TACACS, ISERADIUS)
+            4: entity.other.attribute-name  # optional trailing enable
+
+        # Fallback: if anything else appears, stop the push so we don't get "stuck"
+        - match: $
+          pop: true
 
   aaa_group:
     - match: |
@@ -3103,7 +3128,7 @@ contexts:
         ^\s*
         (aaa)\s+(group)\s+(server)\s+
         (
-          (?:radius)
+          (?:radius|tacacs\+)
         )
         \s+(\S+)
       captures:
@@ -3121,22 +3146,26 @@ contexts:
   aaa_group_settings:
     - match: |
         (?xi)
-        ^\s*
-        (?:
-          (?:
-            (server)\s+({{ip}})
-            (?:\s+(auth-port)\s+(\d+))?
-            (?:\s+(acct-port)\s+(\d+))?
-          )
-        )
+        ^\s+
+        (server)\s+(name)\s+(\S+)
+        \s*$
       captures:
-        1: support.constant
-        2: constant.numeric.ip.ipv4.address
-        3: support.constant
-        4: constant.numeric
-        5: support.constant
-        6: constant.numeric
+        1: support.constant          # server
+        2: support.constant          # name
+        3: string.unquoted           # server name (ISE-RADIUS-1, etc.)
 
+    # Body line: ip (radius|tacacs) source-interface <interface>
+    - match: |
+        (?xi)
+        ^\s+
+        (ip)\s+(radius|tacacs)\s+(source-interface)\s+({{interface_names}})\s*({{interface_numbers}})
+        \s*$
+      captures:
+        1: support.constant                # ip
+        2: support.constant                # radius | tacacs
+        3: support.constant                # source-interface
+        4: entity.other.attribute-name     # source-interface name
+        5: constant.numeric                # source-interface name number
   class_map:
     - match: ^\s*(class-map)\s+(match-(?:(?:all)|(?:any)))\s+(\S+)
       captures:
@@ -3563,9 +3592,10 @@ contexts:
       8: constant.numeric.ip.ipv4.address  # ntp server ip
 
   ip_http:
-  - match: ^\s*(ip\s+http\s+server)
+  - match: ^\s*(ip\s+http\s+(secure-server|server))
     captures:
       1: support.constant
+      2: support.constant
 
   ip_scp:
   - match: ^\s*(ip\s+scp\s+server)\s+(enable)
@@ -3582,7 +3612,12 @@ contexts:
             (?:(source-interface)\s+({{interface_names}})\s+({{interface_numbers}}))|
             (?:(version)\s+([12]))|
             (?:(authentication-retries)\s+(\d+))|
+            (?:(server|client)\s+(algorithm)\s+(encryption)\s+(\S+)\s+)
           )
+        )
+        (?:
+          (?:(\S+)\s+)
+          (?:(\S+)\s+)
         )
       captures:
         1: support.constant             # ip
@@ -3594,6 +3629,12 @@ contexts:
         7: constant.numeric             # version number
         8: support.constant             # authentication-retries
         9: constant.numeric             # authentication-retries number
+        10: entity.other.attribute-name # server | client
+        11: support.constant            # algorithm
+        12: support.constant            # encryption
+        13: constant.numeric            # encryption protocol 1
+        14: constant.numeric            # encryption protocol 2
+        15: constant.numeric            # encryption protocol 3
 
   vtp:
     - match: |
@@ -3625,23 +3666,17 @@ contexts:
     - match: |
         (?xi)
         ^\s*
+        (spanning-tree)\s+
         (?:
-          (spanning-tree)\s+(?:
-            (?:(mode)\s+
-              (?:
-                (rapid-pvst)|
-                (pvst)|
-                (mst)
-              )
-            )
-          )
+          (mode)\s+(pvst|mst|rapid-pvst)|
+          (extend)\s+(system-id)
         )
       captures:
         1: support.constant             # spanning-tree
         2: support.constant             # mode
-        3: entity.other.attribute-name  # mode rapid-pvst
-        4: entity.other.attribute-name  # mode pvst
-        5: entity.other.attribute-name  # mode mst
+        3: entity.other.attribute-name       # pvst mst rapid-pvst
+        4: comment.line   # extend
+        5: comment.line   # system-id
 
   crypto:
     - include: crypto_key
@@ -4340,6 +4375,9 @@ contexts:
       - include: interface_service_policy
       - include: interface_trust_device
       - include: interface_auto_qos
+      - include: authentication
+      - include: mab_dot1x
+      - include: negotiation_auto
       - match: |
           (?xi)
           ^\s*
@@ -4570,7 +4608,60 @@ contexts:
       captures:
         1: support.constant
         2: constant.language
-
+  authentication:
+    - match: |
+        (?xi)
+        ^\s*
+        (authentication)\s+
+        (?:
+          (event)\s+(fail)\s+(action)\s+(next-method)|
+          (host-mode)\s+(multi-auth|single-host|multi-domain|multi-host)|
+          (open|closed)\s+|
+          (order|priority)\s+(mab|dot1x|webauth)\s*(mab|dot1x|webauth)?\s*(mab|dot1x|webauth)?|
+          (periodic)\s+|
+          (timer)\s+(reauthenticate)\s+(server)
+        )
+      captures:
+        1: support.constant                           # authentication
+        2: constant.numeric                           # event
+        3: keyword.other                              # fail
+        4: entity.other.attribute-name                # action
+        5: entity.other.attribute-name                # next-method
+        6: constant.numeric                           # host-mode
+        7: variable.parameter                         # multi-auth|single-host|multi-domain|multi-host
+        8: keyword.other                              # open | closed
+        9: constant.numeric                           # order | priority
+        10: entity.other.attribute-name               # first protocol
+        11: entity.other.attribute-name               # optional second protocol 
+        12: entity.other.attribute-name               # optional third protocol
+        13: entity.other.attribute-name               # periodic
+        14: constant.numeric                          # timer
+        15: entity.other.attribute-name               # reauthenticate
+        16: string.unquoted                           # server
+  mab_dot1x: 
+    - match: | 
+        (?xi) 
+        ^\s* 
+        (?: 
+          (mab)|
+          (dot1x)\s(pae)?\s(authenticator)?
+        )
+      captures:
+        1: constant.numeric                           # mab
+        2: constant.numeric                           # dot1x
+        3: support.constant                           # pae
+        4: entity.other.attribute-name                # authenticator
+  negotiation_auto:
+    - match: |
+        (?xi)
+        ^\s*
+        (negotiation)\s+
+        (?:
+          (auto)
+        )
+      captures:
+        1: comment.line                            #negotiation
+        2: comment.line                                 #auto
   interface_ipv6_link_local:
     - match: |
         (?xi)

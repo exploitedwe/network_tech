@@ -3,6 +3,7 @@ Automated Plugin Releases
 
 pip install GitPython
 """
+
 import datetime
 import json
 import pathlib
