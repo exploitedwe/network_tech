@@ -7,14 +7,15 @@ Network Tech is a Package for Sublime Text providing Cisco config highlighting, 
 ![Apache 2.0 License](https://img.shields.io/badge/Apache-2.0-License-blue?style=for-the-badge)
 ## Installing this updated version
 ### Windows
-Web Download: <br>
-Click <>Code <br>
-Download ZIP <br>
-Open Powershell <br>
-Navigate to directory where file was downloaded. Ex. cd ~/Downloads <br>
-Rename .zip to whatever, but ensure it ends in ".sublime-package". Example cisco_syntax.sublime-package <br>
-Open Sublime Text 3, via the bottom-right file syntax menu, select the sublime-package name you made earlier <br>
-
+#### Web Download: <br>
+1. Click <>Code <br>
+2. Download ZIP <br>
+3. Open Powershell <br>
+4. Navigate to directory where file was downloaded. Ex. cd ~/Downloads <br>
+5. Rename .zip to whatever, but ensure it ends in ".sublime-package". Example cisco_syntax.sublime-package <br>
+6. Move this file to %appdata%/Sublime Text 3/Installed Packages <br>
+7. Open Sublime Text 3, via the bottom-right file syntax menu, select the sublime-package name you made earlier <br>
+8. Enjoy!
 
 ## Installing the Original Version
 
