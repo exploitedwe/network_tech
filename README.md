@@ -1,8 +1,7 @@
 # Network Tech Documentation
 
 Network Tech is a Package for Sublime Text providing Cisco config highlighting, auto completions and more.
-
-![](https://img.shields.io/packagecontrol/dt/Network%20Tech?style=for-the-badge)
+[Original Project](https://github.com/heyglen/network_tech) 
 
 ![Apache 2.0 License](https://img.shields.io/badge/Apache-2.0-License-blue?style=for-the-badge)
 

@@ -2,6 +2,16 @@
 ---
 
 # Copyright 2017 Glen Harmon
+# Updated and Edited by Mitch 2025
+# REFERENCE FOR ME
+# (monokai) Color: 
+# variable.parameter	        (orangey)
+# string.unquoted 	          (yellow)
+# support.constant 	          (blue)
+# constant.numeric	          (purple)
+# entity.other.attribute-name (green)
+# comment.line		            (dark grey)
+# keyword.other               (red)
 
 name: Cisco IOS
 file_extensions:
@@ -2889,17 +2899,18 @@ contexts:
     - match: |
         (?xi)
         (?: 
-          (address)\s+(ipv4)\s+({{ip}})
+          (address)\s+(ipv4)\s+({{ip}})\s+
           ((auth-port)\s+({{number_range_1_4097}})\s+(acct-port)\s+({{number_range_1_4097}}))?
         )
       captures:
         1: support.constant             # address
         2: support.constant             # ipv4
         3: constant.numeric             # IP
-        4: support.constant             # auth-port
-        5: constant.numeric             # auth-port number
-        6: support.constant             # acct-port
-        7: constant.numeric             # acct-port number
+        4: support.constant             # filler
+        5: support.constant             # auth-port
+        6: constant.numeric             # auth-port number
+        7: support.constant             # acct-port
+        8: constant.numeric             # acct-port number
     # Body line: ip (radius|tacacs) source-interface <interface>
     - match: |
         (?xi)
@@ -4625,7 +4636,7 @@ contexts:
         1: support.constant                           # authentication
         2: constant.numeric                           # event
         3: keyword.other                              # fail
-        4: entity.other.attribute-name                # action
+        4: support.constant                           # action
         5: entity.other.attribute-name                # next-method
         6: constant.numeric                           # host-mode
         7: variable.parameter                         # multi-auth|single-host|multi-domain|multi-host
