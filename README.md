@@ -1,11 +1,22 @@
 # Network Tech Documentation
 
-Network Tech is a Package for Sublime Text providing Cisco config highlighting, auto completions and more.
-[Original Project](https://github.com/heyglen/network_tech) 
+Network Tech is a Package for Sublime Text providing Cisco config highlighting, auto completions and more. <br>
+[Original Project by Glen Harmon](https://github.com/heyglen/network_tech) <br>
+
 
 ![Apache 2.0 License](https://img.shields.io/badge/Apache-2.0-License-blue?style=for-the-badge)
+## Installing this updated version
+### Windows
+Web Download: <br>
+Click <>Code <br>
+Download ZIP <br>
+Open Powershell <br>
+Navigate to directory where file was downloaded. Ex. cd ~/Downloads <br>
+Rename .zip to whatever, but ensure it ends in ".sublime-package". Example cisco_syntax.sublime-package <br>
+Open Sublime Text 3, via the bottom-right file syntax menu, select the sublime-package name you made earlier <br>
 
-## Quick Start
+
+## Installing the Original Version
 
 1. [Install Sublime Text](https://www.sublimetext.com/)
 
