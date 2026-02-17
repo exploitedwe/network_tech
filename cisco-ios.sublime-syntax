@@ -4733,7 +4733,7 @@ contexts:
     - match: |
         (?xi)
         ^\s*
-        (banner)\s+(login)\s+
+        (banner)\s+(login|exec|motd|incoming)\s+
         (\^?\S)([^\3]*)
       captures:
         1: support.constant
