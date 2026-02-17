@@ -2993,7 +2993,7 @@ contexts:
             2: string.unquoted
         - match: (if-authenticated)
           captures:
-            1: support.constant
+            1: keyword.other
         - match: (local)
           captures:
             1: keyword.control
@@ -3124,10 +3124,10 @@ contexts:
             \s*$
           pop: true
           captures:
-            1: entity.other.attribute-name  # method: local/local-case/none/line/enable
+            1: keyword.other  # method: local/local-case/none/line/enable
             2: support.constant             # keyword: group
             3: string.unquoted              # group name (e.g., ISE-TACACS, ISERADIUS)
-            4: entity.other.attribute-name  # optional trailing enable
+            4: keyword.other  # optional trailing enable
 
         # Fallback: if anything else appears, stop the push so we don't get "stuck"
         - match: $
