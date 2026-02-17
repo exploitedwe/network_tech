@@ -2915,11 +2915,18 @@ contexts:
     - match: |
         (?xi)
         ^\s+
-        (key)\s+(\S+)\s+
+        (
+          ((key) \s+ (?:\d+\s+)? (\S+))|
+          (timeout)\s+(\d+)
+        )
         \s*$
       captures:
-        1: support.constant                # key
-        2: string.unquoted               # password
+        2: support.constant               # hash type
+        3: entity.other.attribute-name    # key
+        4: string.unquoted                # hashed or unhashed password
+        5: support.constant                # timeout
+        6: constant.numeric               # timeout (seconds)
+
   misc_catch:
     - match: |
         (?xi)
