@@ -5660,9 +5660,9 @@ contexts:
             \s+
             ([^{{comment}}]*)
           captures:
-            1: entity.other.attribute-name
-            2: keyword.other
-            3: string.unquoted
+            1: entity.other.attribute-name  # include
+            2: keyword.other                # exclude
+            3: string.unquoted              # comment
   show_drives:
     - match: '\s*(show)\s+({{drives}})'
       captures:
